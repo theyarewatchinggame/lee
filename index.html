@@ -143,34 +143,31 @@
     #unity-container,
     .unity-mobile {
       position: relative !important;
-      top: auto !important;
-      left: auto !important;
-      transform: none !important;
-
-      /* 寬度 80%，讓畫面縮小並可上下滑動 */
+      
+      /* 自適應寬高解法  */
+      /* 寬度最大為 100%，但如果螢幕太寬，則用高度反推寬度 (100vh * 16/9) */
       width: 100% !important;
+      max-width: calc(100vh * (16 / 9)) !important; 
       aspect-ratio: 16 / 9 !important;
+      
+      /* 高度讓 aspect-ratio 自動推算 */
       height: auto !important;
+      max-height: 100vh !important;
 
-      /* 改為 auto 讓 Flexbox 完全接管置中計算 */
-      margin: auto !important; 
+      margin: auto !important; /* Flexbox 完美置中 */
       background: #000 !important;
       overflow: hidden !important;
     }
 
     #unity-canvas,
     canvas.unity-mobile {
-      /* 關鍵修正：將畫布絕對定位死鎖在容器內，無視 Unity 腳本干擾 */
       position: absolute !important;
       top: 0 !important;
       left: 0 !important;
-      transform: none !important; /* 清除所有被強制注入的偏移 */
-      
+      transform: none !important; 
       width: 100% !important;
       height: 100% !important;
       display: block !important;
-      margin: 0 !important; 
-      padding: 0 !important;
     }
 
     #unity-footer {
