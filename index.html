@@ -132,8 +132,11 @@
     #stage {
       min-height: 100vh;
       min-height: 100dvh;
-      /* 恢復原本的 padding 設定，給予畫面上下呼吸空間 */
-      align-items: center;
+      /* 補上這三行！強制鎖定 Flexbox 水平與垂直置中 */
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      
       padding: 20px 0 28px !important; 
     }
 
@@ -144,12 +147,13 @@
       left: auto !important;
       transform: none !important;
 
-      /* 把寬度調小，例如改成 80% 或 85%，讓使用者可以上下滑動 */
+      /* 寬度 80%，讓畫面縮小並可上下滑動 */
       width: 80% !important;
       aspect-ratio: 16 / 9 !important;
       height: auto !important;
 
-      margin: 0 auto !important;
+      /* 改為 auto 讓 Flexbox 完全接管置中計算 */
+      margin: auto !important; 
       background: #000 !important;
       overflow: hidden !important;
     }
@@ -160,6 +164,8 @@
       width: 100% !important;
       height: 100% !important;
       display: block !important;
+      /* 補上這行！強制內部畫布置中，防止 Unity 腳本干擾 */
+      margin: 0 auto !important; 
     }
 
     #unity-footer {
