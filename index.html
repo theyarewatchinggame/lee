@@ -1,193 +1,328 @@
 <!DOCTYPE html>
 <html lang="en-us">
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>Unity WebGL Player | EggRoom</title>
-  <link rel="shortcut icon" href="TemplateData/favicon.ico">
-  <link rel="stylesheet" href="TemplateData/style.css">
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Unity WebGL Player | EggRoom</title>
+<link rel="shortcut icon" href="TemplateData/favicon.ico">
+<link rel="stylesheet" href="TemplateData/style.css">
 
-  <style>
-    /* 移除所有預設邊距，固定高度防止捲動 */
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+    background: #000;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #000;
+    font-family: Arial, sans-serif;
+  }
+
+  #stage {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 0 20px;
+    box-sizing: border-box;
+    overflow: visible;
+  }
+
+  #unity-container {
+    position: relative !important;
+    /* 修正 1：將 100vw 改為 100%，避免捲軸寬度導致畫面無法置中 */
+    width: min(calc(100% - 24px), calc((100vh - 32px) * 16 / 9));
+    width: min(calc(100% - 24px), calc((100dvh - 32px) * 16 / 9));
+    aspect-ratio: 16 / 9;
+    height: auto !important;
+    margin: auto; /* 確保上下左右皆由 flex 完美置中 */
+    background: #000;
+    overflow: hidden;
+  }
+
+  #unity-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    background: #000;
+    touch-action: manipulation;
+  }
+
+  #unity-loading-bar {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    width: min(80%, 400px);
+    display: none;
+  }
+
+  #unity-warning {
+    position: absolute;
+    left: 50%;
+    top: 20px;
+    transform: translateX(-50%);
+    z-index: 30;
+    width: calc(100% - 20px);
+    max-width: 600px;
+  }
+
+  #unity-footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 25;
+  }
+
+  #ending-video-overlay {
+    position: absolute;
+    left: 6%;
+    top: 23%;
+    width: 28%;
+    height: 30%;
+    z-index: 999999;
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+    pointer-events: auto;
+    transition: opacity 0.35s ease;
+    background: transparent;
+    border: 0;
+    box-sizing: border-box;
+  }
+
+  #ending-video-overlay.visible {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  #ending-video-frame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #000;
+  }
+
+  @media (max-width: 1024px) {
     html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      overflow: hidden; /* 防止手機瀏覽器出現歪斜捲動 */
-      font-family: Arial, sans-serif;
+      overflow-y: auto !important;
+      height: auto !important;
+      display: block !important;
     }
 
-    /* 舞台層：確保內容永遠置中 */
     #stage {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100dvh; /* 使用動態視窗高度 */
-      display: flex;
-      justify-content: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+      /* 恢復原本的 padding 設定，給予畫面上下呼吸空間 */
       align-items: center;
-      background: #000;
-      /* 處理 iPhone 瀏海安全區域 */
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-      box-sizing: border-box;
+      padding: 20px 0 28px !important; 
     }
 
-    /* 容器層：鎖定比例且不溢出螢幕 */
-    #unity-container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      max-width: 100%;
-      max-height: 100%;
-      /* 核心：確保不論寬高如何變化，都維持 16:9 */
-      aspect-ratio: 16 / 9; 
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #000;
+    #unity-container,
+    .unity-mobile {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      transform: none !important;
+
+      /* 把寬度調小，例如改成 80% 或 85%，讓使用者可以上下滑動 */
+      width: 80% !important;
+      aspect-ratio: 16 / 9 !important;
+      height: auto !important;
+
+      margin: 0 auto !important;
+      background: #000 !important;
+      overflow: hidden !important;
     }
 
-    #unity-canvas {
+    #unity-canvas,
+    canvas.unity-mobile {
+      position: relative !important;
       width: 100% !important;
       height: 100% !important;
-      display: block;
-      touch-action: none; /* 防止遊戲中誤觸系統手勢 */
-    }
-
-    /* YouTube 疊加層：改用相對比例，確保在手機上位置正確 */
-    #youtubeOverlay {
-      position: absolute;
-      left: 6%;
-      top: 23%;
-      width: 28%;
-      height: 30%;
-      z-index: 100;
-      display: none;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease;
-      background: #000;
-    }
-
-    #youtubeOverlay.visible {
       display: block !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-    }
-
-    #youtubeFrame {
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
-
-    /* 載入條置中 */
-    #unity-loading-bar {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 10;
     }
 
     #unity-footer {
-      display: none; /* 手機版通常不需要 Footer，建議隱藏以節省空間 */
+      display: none !important;
     }
-
-    /* 桌機版微調：如果螢幕夠大，顯示 Footer */
-    @media (min-width: 1025px) {
-      #unity-footer {
-        display: flex;
-        position: absolute;
-        bottom: -30px; /* 放在遊戲畫面下方 */
-        width: 100%;
-        color: #fff;
-      }
-    }
-  </style>
+  }
+</style>
 </head>
 
 <body>
-  <div id="stage">
-    <div id="unity-container">
-      <canvas id="unity-canvas" tabindex="-1"></canvas>
+<div id="stage">
+  <div id="unity-container" class="unity-desktop">
+    <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
 
-      <div id="youtubeOverlay">
-        <iframe
-          id="youtubeFrame"
-          src=""
-          allow="autoplay; encrypted-media; picture-in-picture"
-          allowfullscreen>
-        </iframe>
-      </div>
+    <div id="ending-video-overlay">
+      <iframe
+        id="ending-video-frame"
+        src=""
+        allow="autoplay; encrypted-media; picture-in-picture"
+        allowfullscreen
+        referrerpolicy="strict-origin-when-cross-origin">
+      </iframe>
+    </div>
 
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
+    <div id="unity-loading-bar">
+      <div id="unity-logo"></div>
+      <div id="unity-progress-bar-empty">
+        <div id="unity-progress-bar-full"></div>
       </div>
     </div>
+
+    <div id="unity-warning"></div>
+
+    <div id="unity-footer">
+      <div id="unity-webgl-logo"></div>
+      <div id="unity-fullscreen-button"></div>
+      <div id="unity-build-title">000_13</div>
+    </div>
   </div>
+</div>
 
-  <script>
-    const canvas = document.querySelector("#unity-canvas");
-    const loadingBar = document.querySelector("#unity-loading-bar");
-    const progressBarFull = document.querySelector("#unity-progress-bar-full");
+<script>
+  const stage = document.querySelector("#stage");
+  const container = document.querySelector("#unity-container");
+  const canvas = document.querySelector("#unity-canvas");
+  const loadingBar = document.querySelector("#unity-loading-bar");
+  const progressBarFull = document.querySelector("#unity-progress-bar-full");
+  const fullscreenButton = document.querySelector("#unity-fullscreen-button");
+  const warningBanner = document.querySelector("#unity-warning");
 
-    const buildUrl = "Build";
-    const loaderUrl = buildUrl + "/0427.loader.js";
-    const config = {
-      dataUrl: buildUrl + "/0427.data.unityweb",
-      frameworkUrl: buildUrl + "/0427.framework.js.unityweb",
-      codeUrl: buildUrl + "/0427.wasm.unityweb",
-      streamingAssetsUrl: "StreamingAssets",
-      companyName: "DefaultCompany",
-      productName: "EggRoom",
-      productVersion: "0.1",
-      matchWebGLToCanvasSize: true, // 關鍵：讓 Unity 自動適應 Canvas 大小
-      devicePixelRatio: window.devicePixelRatio || 1, // 優化畫質
-    };
+  function unityShowBanner(msg, type) {
+    function updateBannerVisibility() {
+      warningBanner.style.display = warningBanner.children.length ? "block" : "none";
+    }
 
-    const script = document.createElement("script");
-    script.src = loaderUrl;
-    script.onload = () => {
-      createUnityInstance(canvas, config, (progress) => {
-        progressBarFull.style.width = (100 * progress) + "%";
-      }).then((unityInstance) => {
-        loadingBar.style.display = "none";
-        
-        // 視窗縮放修正
-        window.addEventListener('resize', () => {
-            // 強制 Unity 重新計算佈局
-            window.dispatchEvent(new Event('resize'));
-        });
-      }).catch((message) => {
-        alert("載入失敗: " + message);
-      });
-    };
-    document.body.appendChild(script);
+    const div = document.createElement("div");
+    div.innerHTML = msg;
+    div.style.padding = "10px";
+    div.style.marginBottom = "8px";
+    div.style.borderRadius = "8px";
+    div.style.textAlign = "center";
+    div.style.fontSize = "14px";
 
-    // YouTube 控制函式 (保留原本名稱以相容 Unity)
-    window.showYouTubeVideo = window.ShowYoutubeVideo = function (videoId) {
-      const overlay = document.getElementById("youtubeOverlay");
-      const frame = document.getElementById("youtubeFrame");
-      if (!overlay || !frame) return;
+    if (type === "error") {
+      div.style.background = "red";
+      div.style.color = "white";
+    } else {
+      div.style.background = "yellow";
+      div.style.color = "black";
+      setTimeout(() => {
+        if (div.parentNode) {
+          warningBanner.removeChild(div);
+          updateBannerVisibility();
+        }
+      }, 5000);
+    }
 
-      frame.src = "https://www.youtube.com/embed/" + videoId + "?autoplay=1&mute=1&playsinline=1&rel=0";
+    warningBanner.appendChild(div);
+    updateBannerVisibility();
+  }
+
+  const buildUrl = "Build";
+  const loaderUrl = buildUrl + "/0427.loader.js";
+
+  const config = {
+    dataUrl: buildUrl + "/0427.data.unityweb",
+    frameworkUrl: buildUrl + "/0427.framework.js.unityweb",
+    codeUrl: buildUrl + "/0427.wasm.unityweb",
+    streamingAssetsUrl: "StreamingAssets",
+    companyName: "DefaultCompany",
+    productName: "/0427",
+    productVersion: "0.1.0",
+    showBanner: unityShowBanner,
+  };
+
+  if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+    /*container.className = "unity-mobile";
+    canvas.className = "unity-mobile";*/
+    config.devicePixelRatio = 1;
+  }
+
+  loadingBar.style.display = "block";
+
+  const script = document.createElement("script");
+  script.src = loaderUrl;
+
+  script.onload = () => {
+    createUnityInstance(canvas, config, (progress) => {
+      progressBarFull.style.width = (100 * progress) + "%";
+    }).then((unityInstance) => {
+      loadingBar.style.display = "none";
+
+      fullscreenButton.onclick = () => {
+        if (stage.requestFullscreen) {
+          stage.requestFullscreen();
+        } else if (stage.webkitRequestFullscreen) {
+          stage.webkitRequestFullscreen();
+        }
+      };
+
+      setTimeout(() => window.dispatchEvent(new Event("resize")), 300);
+    }).catch((message) => {
+      alert(message);
+    });
+  };
+
+  script.onerror = () => {
+    alert("loader 載入失敗，請確認 Build 檔名完全一致");
+  };
+
+  document.body.appendChild(script);
+
+  window.ShowYoutubeVideo = function (videoId) {
+    const overlay = document.getElementById("ending-video-overlay");
+    const iframe = document.getElementById("ending-video-frame");
+
+    if (!overlay || !iframe) return;
+
+    iframe.src = "";
+    setTimeout(() => {
+      iframe.src =
+        "https://www.youtube.com/embed/" +
+        videoId +
+        "?autoplay=1&mute=1&playsinline=1&rel=0&controls=1&modestbranding=1";
+
       overlay.classList.add("visible");
-    };
+      overlay.style.display = "block";
+    }, 80);
+  };
 
-    window.hideYouTubeVideo = window.HideYoutubeVideo = function () {
-      const overlay = document.getElementById("youtubeOverlay");
-      const frame = document.getElementById("youtubeFrame");
-      if (frame) frame.src = "";
-      if (overlay) overlay.classList.remove("visible");
-    };
-  </script>
+  window.HideYoutubeVideo = function () {
+    const overlay = document.getElementById("youtubeOverlay");
+    const iframe = document.getElementById("youtubeFrame");
+
+    if (iframe) iframe.src = "";
+    if (overlay) {
+      overlay.classList.remove("visible");
+      overlay.style.display = "none";
+    }
+  };
+</script>
+</body>
+</html>
+
 </body>
 </html>
